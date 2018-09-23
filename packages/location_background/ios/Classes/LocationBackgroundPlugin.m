@@ -36,6 +36,7 @@ static LocationBackgroundPlugin *instance = nil;
 // location event.
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+  return YES;
   // Check to see if we're being launched due to a location event.
   if (launchOptions[UIApplicationLaunchOptionsLocationKey] != nil) {
     // Restart the headless service.
@@ -66,6 +67,8 @@ static LocationBackgroundPlugin *instance = nil;
   } else if ([@"startHeadlessService" isEqualToString:call.method]) {
     NSAssert(arguments.count == 1, @"Invalid argument count for 'startHeadlessService'");
     [self startHeadlessService:[arguments[0] longValue]];
+  } else if ([@"initialize" isEqualToString:call.method]) {
+    [self initialize];
   } else if ([@"cancelLocationUpdates" isEqualToString:call.method]) {
     NSAssert(arguments.count == 0, @"Invalid argument count for 'cancelLocationUpdates'");
     [self stopUpdatingLocation];
@@ -95,7 +98,6 @@ static LocationBackgroundPlugin *instance = nil;
   _persistentState = [NSUserDefaults standardUserDefaults];
   _locationManager = [[CLLocationManager alloc] init];
   [_locationManager setDelegate:self];
-  [_locationManager requestAlwaysAuthorization];
 
   _headlessRunner = [[FlutterHeadlessDartRunner alloc] init];
   _registrar = registrar;
@@ -115,6 +117,11 @@ static LocationBackgroundPlugin *instance = nil;
       methodChannelWithName:@"plugins.flutter.io/ios_background_location_callback"
             binaryMessenger:_headlessRunner];
   return self;
+}
+
+- (bool)initialize {
+  [_locationManager requestAlwaysAuthorization];
+  return true;
 }
 
 - (int64_t)getCallbackDispatcherHandle {
